@@ -275,3 +275,115 @@ Check logs if issues occur:
 ```bash
 sudo journalctl -u alertmanager -f
 ```
+
+## Grafana Installation Guide
+
+This guide provides step-by-step instructions for installing and configuring Grafana visualization platform on Linux systems.
+
+### Prerequisites
+- Prometheus and Alertmanager already installed (see above)
+- sudo privileges
+- Internet connection
+
+### Step 1: Install Dependencies
+
+Install required system dependencies for Grafana:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y adduser libfontconfig1 musl
+```
+
+**What these dependencies do:**
+- `adduser` - User management utilities
+- `libfontconfig1` - Font configuration library for proper text rendering
+- `musl` - C standard library implementation
+
+### Step 2: Download Grafana
+
+Download the latest Grafana Enterprise edition:
+
+```bash
+cd /tmp/
+wget https://dl.grafana.com/grafana-enterprise/release/12.2.0/grafana-enterprise_12.2.0_17949786146_linux_arm64.deb
+```
+
+> **Note:** Replace `linux_arm64` with `linux_amd64` if you're on an x86_64 system.
+
+### Step 3: Install Grafana Package
+
+Install Grafana using the downloaded .deb package:
+
+```bash
+sudo dpkg -i grafana-enterprise_12.2.0_17949786146_linux_arm64.deb
+```
+
+**What this does:**
+- Installs Grafana binaries
+- Creates grafana user and group
+- Sets up default configuration files
+- Creates systemd service file
+
+### Step 4: Configure and Start Service
+
+Enable and start the Grafana service:
+
+```bash
+# Reload systemd daemon to recognize Grafana service
+sudo systemctl daemon-reload
+
+# Enable Grafana to start at boot
+sudo systemctl enable grafana-server
+
+# Start Grafana service
+sudo systemctl start grafana-server
+
+# Check service status
+sudo systemctl status grafana-server
+```
+
+### Step 5: Initial Configuration
+
+#### Default Access Information
+- **URL:** http://localhost:3000
+- **Default Username:** admin
+- **Default Password:** admin
+
+#### First Login Steps:
+1. Open web browser and navigate to `http://localhost:3000`
+2. Login with admin/admin credentials
+3. Change the default password when prompted
+
+### Step 6: Add Prometheus as Data Source
+
+#### Via Web Interface:
+1. Go to **Configuration** → **Data Sources**
+2. Click **Add data source**
+3. Select **Prometheus**
+4. Configure the following settings:
+   - **Name:** Prometheus
+   - **URL:** http://localhost:9090
+   - **Access:** Server (default)
+5. Click **Save & Test**
+
+### Verification
+
+#### 1. Check Service Status
+```bash
+sudo systemctl status grafana-server
+```
+
+#### 2. Check Network Connectivity
+```bash
+sudo ss -tlnp | grep :3000
+```
+
+#### 3. Access Web Interface
+Open your browser and navigate to: http://localhost:3000
+
+### Troubleshooting
+
+Check logs if issues occur:
+```bash
+sudo journalctl -u grafana-server -f
+```
