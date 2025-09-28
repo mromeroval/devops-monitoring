@@ -387,3 +387,318 @@ Check logs if issues occur:
 ```bash
 sudo journalctl -u grafana-server -f
 ```
+
+## Node Exporter Installation Guide
+
+This guide provides step-by-step instructions for installing and configuring Node Exporter to collect system metrics on Linux systems.
+
+### Prerequisites
+- Prometheus already installed (see above)
+- sudo privileges
+- Internet connection
+
+### Step 1: Create System User
+
+Create a dedicated system user for running Node Exporter:
+
+```bash
+sudo useradd -r node_exporter
+```
+
+**What this does:** Creates a system user with no home directory and no login shell for security.
+
+### Step 2: Download Node Exporter
+
+Download the latest Node Exporter release:
+
+```bash
+cd /tmp/
+wget https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-arm64.tar.gz
+```
+
+> **Note:** Replace `linux-arm64` with `linux-amd64` if you're on an x86_64 system.
+
+### Step 3: Extract Archive
+
+Extract the downloaded archive:
+
+```bash
+tar -xvf node_exporter-1.9.1.linux-arm64.tar.gz
+cd node_exporter-1.9.1.linux-arm64/
+```
+
+### Step 4: Install Binary
+
+Move the binary to system PATH and set proper permissions:
+
+```bash
+sudo mv node_exporter /usr/local/bin/
+sudo chmod 755 /usr/local/bin/node_exporter
+```
+
+**What this installs:**
+- `node_exporter` - Collects hardware and OS metrics from Linux systems
+
+### Step 5: Create Systemd Service
+
+Create the systemd service file:
+
+```bash
+sudo vim /etc/systemd/system/node_exporter.service
+```
+
+Add this configuration:
+
+```ini
+[Unit]
+Description=Node Exporter
+Documentation=https://prometheus.io/docs/guides/node-exporter/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/node_exporter \
+    --web.listen-address=0.0.0.0:9100
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Service configuration explained:**
+- Runs as `node_exporter` user for security
+- Automatically restarts on failure
+- Listens on port 9100 (default Node Exporter port)
+- Collects system metrics automatically
+
+### Step 6: Start and Enable Service
+
+```bash
+# Reload systemd daemon to recognize new service
+sudo systemctl daemon-reload
+
+# Start Node Exporter service
+sudo systemctl start node_exporter
+
+# Check service status
+sudo systemctl status node_exporter
+
+# Enable service to start at boot
+sudo systemctl enable node_exporter
+```
+
+Restart Prometheus to apply the configuration:
+
+```bash
+sudo systemctl restart prometheus
+```
+
+### Verification
+
+#### 1. Check Service Status
+```bash
+sudo systemctl status node_exporter
+```
+
+#### 2. Check Network Connectivity
+```bash
+sudo ss -tlnp | grep :9100
+```
+
+#### 3. Test Metrics Endpoint
+```bash
+curl http://localhost:9100/metrics
+```
+
+This should return a large amount of system metrics.
+
+
+## Prometheus Targets Configuration
+
+This section explains how to configure Prometheus to scrape metrics from all the services in your monitoring stack.
+
+### Overview
+
+After installing all components (Prometheus, Alertmanager, Grafana, Node Exporter), you need to configure Prometheus to collect metrics from each service. This creates a comprehensive monitoring setup.
+
+### Step 1: Edit Prometheus Configuration
+
+Open the Prometheus configuration file:
+
+```bash
+sudo systemctl stop prometheus
+sudo vim /etc/prometheus/prometheus.yml
+```
+
+### Step 2: Add All Monitoring Targets
+
+Add the following jobs to the `scrape_configs` section of your `prometheus.yml`:
+
+```yaml
+# Global configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093
+
+# Rule files (for alerting rules)
+rule_files:
+  # - "alert_rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Alertmanager monitoring
+  - job_name: "alertmanager"
+    static_configs:
+      - targets: ["localhost:9093"]
+    scrape_interval: 30s
+
+  # Grafana monitoring  
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["localhost:3000"]
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+
+  # Node Exporter (system metrics)
+  - job_name: "node_exporter"
+    static_configs:
+      - targets: ["localhost:9100"]
+    scrape_interval: 15s
+```
+
+### Step 3: Validate Configuration
+
+Before restarting, validate the configuration syntax:
+
+```bash
+promtool check config /etc/prometheus/prometheus.yml
+```
+
+Expected output should show:
+```
+Checking /etc/prometheus/prometheus.yml
+SUCCESS: /etc/prometheus/prometheus.yml is valid prometheus config file syntax
+```
+
+### Step 4: Restart Services
+
+Restart Prometheus to apply the new configuration:
+
+```bash
+sudo systemctl restart prometheus
+sudo systemctl status prometheus
+```
+
+### Target Explanation
+
+#### Service Monitoring Targets:
+
+| Service | Port | Purpose | Metrics Available |
+|---------|------|---------|-------------------|
+| **Prometheus** | 9090 | Self-monitoring | Query performance, storage, rule evaluation |
+| **Alertmanager** | 9093 | Alert handling metrics | Alert processing, notification success/failure |
+| **Grafana** | 3000 | Dashboard metrics | User sessions, dashboard usage, query performance |
+| **Node Exporter** | 9100 | System metrics | CPU, memory, disk, network, hardware sensors |
+
+#### Scrape Intervals Explained:
+- **15s (default):** For critical system metrics (Prometheus, Node Exporter)
+- **30s:** For application metrics (Alertmanager, Grafana) - less critical
+
+### Step 5: Verification
+
+#### 1. Check Targets Status
+Navigate to the Prometheus targets page:
+```
+http://localhost:9090/targets
+```
+
+All targets should show status **UP** in green.
+
+#### 2. Verify Each Target
+
+Test each target endpoint manually:
+
+```bash
+# Prometheus metrics
+curl -s http://localhost:9090/metrics | head -5
+
+# Alertmanager metrics  
+curl -s http://localhost:9093/metrics | head -5
+
+# Grafana metrics
+curl -s http://localhost:3000/metrics | head -5
+
+# Node Exporter metrics
+curl -s http://localhost:9100/metrics | head -5
+```
+
+#### 3. Query Sample Metrics
+
+In the Prometheus web UI (`http://localhost:9090`), try these queries:
+
+```promql
+# Check all services are up
+up
+
+# Prometheus query rate
+rate(prometheus_http_requests_total[5m])
+
+# System CPU usage
+100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+# Memory usage percentage
+(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+# Grafana active users
+grafana_stat_active_users
+
+# Alertmanager alerts
+alertmanager_alerts_active
+```
+
+### Troubleshooting
+
+#### Common Issues:
+
+1. **Target DOWN status:**
+   ```bash
+   # Check if service is running
+   sudo systemctl status <service-name>
+   
+   # Check if port is listening
+   sudo ss -tlnp | grep :<port>
+   ```
+
+2. **Configuration errors:**
+   ```bash
+   # Check Prometheus logs
+   sudo journalctl -u prometheus -f
+   
+   # Validate config again
+   promtool check config /etc/prometheus/prometheus.yml
+   ```
+
+3. **Network connectivity:**
+   ```bash
+   # Test connectivity to each target
+   telnet localhost 9090
+   telnet localhost 9093
+   telnet localhost 3000
+   telnet localhost 9100
+   ```
