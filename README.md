@@ -4,12 +4,13 @@
 
 This guide provides step-by-step instructions for installing and configuring Prometheus on Linux systems.
 
-## Prerequisites
+### Prometheus Prerequisites
+
 - Linux system with systemd
 - sudo privileges  
 - Internet connection
 
-## Step 1: Create System User
+### Step 1: Create Prometheus System User
 
 Create a dedicated system user for running Prometheus:
 
@@ -19,7 +20,7 @@ sudo useradd -r prometheus
 
 **What this does:** Creates a system user with no home directory and no login shell for security.
 
-## Step 2: Create Directories
+### Step 2: Create Prometheus Directories
 
 Create directories and set ownership for Prometheus:
 
@@ -29,10 +30,11 @@ sudo chown prometheus:prometheus /var/lib/prometheus
 ```
 
 **Directory purposes:**
+
 - `/etc/prometheus/` - Configuration files
 - `/var/lib/prometheus/` - Data storage (owned by prometheus user)
 
-## Step 3: Download Prometheus
+### Step 3: Download Prometheus
 
 Download the latest Prometheus release:
 
@@ -43,14 +45,14 @@ wget https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheu
 
 > **Note:** Replace `linux-arm64` with `linux-amd64` if you're on an x86_64 system.
 
-## Step 4: Extract Archive
+### Step 4: Extract Prometheus Archive
 
-```bash 
+```bash
 tar -xvf prometheus-3.5.0.linux-arm64.tar.gz
 cd prometheus-3.5.0.linux-arm64
 ```
 
-## Step 5: Install Configuration and Binaries
+### Step 5: Install Prometheus Configuration and Binaries
 
 Move configuration file and set ownership:
 
@@ -61,16 +63,16 @@ sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
 
 Move binaries to system PATH:
 
-```bash 
+```bash
 sudo mv prometheus promtool /usr/local/bin/
 sudo chmod 755 /usr/local/bin/prometheus /usr/local/bin/promtool
 ```
 
-## Step 6: Create Systemd Service
+### Step 6: Create Prometheus Systemd Service
 
 Create the service file:
 
-```bash 
+```bash
 sudo vim /etc/systemd/system/prometheus.service
 ```
 
@@ -100,7 +102,7 @@ ExecStart=/usr/local/bin/prometheus \
 WantedBy=multi-user.target
 ```
 
-## Step 7: Start and Enable Service
+### Step 7: Start and Enable Service
 
 ```bash
 sudo systemctl daemon-reload
@@ -109,7 +111,7 @@ sudo systemctl status prometheus
 sudo systemctl enable prometheus
 ```
 
-## Verification
+### Prometheus Verification
 
 Check if Prometheus is running:
 
@@ -118,26 +120,27 @@ sudo systemctl status prometheus
 sudo ss -tlnp | grep :9090
 ```
 
-Access web interface: http://localhost:9090
+Access web interface: [http://localhost:9090](http://localhost:9090)
 
-## Troubleshooting
+### Prometheus Troubleshooting
 
 Check logs if issues occur:
+
 ```bash
 sudo journalctl -u prometheus -f
 ```
-
 
 ## Alertmanager Installation Guide
 
 This guide provides step-by-step instructions for installing and configuring Alertmanager on Linux systems.
 
-### Prerequisites
+### Alertmanager Prerequisites
+
 - Prometheus already installed (see above)
 - sudo privileges
 - Internet connection
 
-### Step 1: Create System User
+### Step 1: Create Alertmanager System User
 
 Create a dedicated system user for running Alertmanager:
 
@@ -147,7 +150,7 @@ sudo useradd -r alertmanager
 
 **What this does:** Creates a system user with no home directory and no login shell for security.
 
-### Step 2: Create Directories
+### Step 2: Create Alertmanager Directories
 
 Create directories for Alertmanager configuration and data:
 
@@ -157,6 +160,7 @@ sudo chown alertmanager:alertmanager /var/lib/alertmanager
 ```
 
 **Directory purposes:**
+
 - `/etc/alertmanager/` - Configuration files
 - `/var/lib/alertmanager/` - Data storage (owned by alertmanager user)
 
@@ -171,14 +175,14 @@ wget https://github.com/prometheus/alertmanager/releases/download/v0.28.1/alertm
 
 > **Note:** Replace `linux-arm64` with `linux-amd64` if you're on an x86_64 system.
 
-### Step 4: Extract Archive
+### Step 4: Extract Alertmanager Archive
 
 ```bash
 tar -xvf alertmanager-0.28.1.linux-arm64.tar.gz
 cd alertmanager-0.28.1.linux-arm64/
 ```
 
-### Step 5: Install Configuration and Binaries
+### Step 5: Install Alertmanager Configuration and Binaries
 
 Move configuration file and set ownership:
 
@@ -195,10 +199,11 @@ sudo chmod 755 /usr/local/bin/alertmanager /usr/local/bin/amtool
 ```
 
 **What this installs:**
+
 - `alertmanager` - Main alertmanager binary
 - `amtool` - Command-line tool for interacting with Alertmanager
 
-### Step 6: Create Systemd Service
+### Step 6: Create Alertmanager Systemd Service
 
 Create the systemd service file:
 
@@ -230,22 +235,25 @@ ExecStart=/usr/local/bin/alertmanager \
 WantedBy=multi-user.target
 ```
 
-### Step 7: Update Prometheus configuration with Alertmanager 
+### Step 7: Update Prometheus Configuration
 
+Update Prometheus configuration to include Alertmanager:
+
+```bash
 sudo systemctl stop prometheus
 sudo vim /etc/prometheus/prometheus.yml
+```
 
-update the commented line for Alertmanager configuration with the corresponing `targets`
+Update the Alertmanager configuration section:
 
-``` yaml
+```yaml
 # Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
-           - localhost:9093 # Uncomment and update this line
+          - localhost:9093
 ```
-
 
 ### Step 8: Start and Enable Services
 
@@ -258,7 +266,7 @@ sudo systemctl status alertmanager
 sudo systemctl enable alertmanager
 ```
 
-### Verification
+### Alertmanager Verification
 
 Check if Alertmanager is running:
 
@@ -267,11 +275,12 @@ sudo systemctl status alertmanager
 sudo ss -tlnp | grep :9093
 ```
 
-Access web interface: http://localhost:9093
+Access web interface: [http://localhost:9093](http://localhost:9093)
 
-### Troubleshooting
+### Alertmanager Troubleshooting
 
 Check logs if issues occur:
+
 ```bash
 sudo journalctl -u alertmanager -f
 ```
@@ -280,7 +289,8 @@ sudo journalctl -u alertmanager -f
 
 This guide provides step-by-step instructions for installing and configuring Grafana visualization platform on Linux systems.
 
-### Prerequisites
+### Grafana Prerequisites
+
 - Prometheus and Alertmanager already installed (see above)
 - sudo privileges
 - Internet connection
@@ -295,6 +305,7 @@ sudo apt-get install -y adduser libfontconfig1 musl
 ```
 
 **What these dependencies do:**
+
 - `adduser` - User management utilities
 - `libfontconfig1` - Font configuration library for proper text rendering
 - `musl` - C standard library implementation
@@ -319,6 +330,7 @@ sudo dpkg -i grafana-enterprise_12.2.0_17949786146_linux_arm64.deb
 ```
 
 **What this does:**
+
 - Installs Grafana binaries
 - Creates grafana user and group
 - Sets up default configuration files
@@ -344,46 +356,52 @@ sudo systemctl status grafana-server
 
 ### Step 5: Initial Configuration
 
-#### Default Access Information
-- **URL:** http://localhost:3000
+**Default Access Information:**
+
+- **URL:** [http://localhost:3000](http://localhost:3000)
 - **Default Username:** admin
 - **Default Password:** admin
 
-#### First Login Steps:
-1. Open web browser and navigate to `http://localhost:3000`
+**First Login Steps:**
+
+1. Open web browser and navigate to [http://localhost:3000](http://localhost:3000)
 2. Login with admin/admin credentials
 3. Change the default password when prompted
 
 ### Step 6: Add Prometheus as Data Source
 
-#### Via Web Interface:
+**Via Web Interface:**
+
 1. Go to **Configuration** → **Data Sources**
 2. Click **Add data source**
 3. Select **Prometheus**
 4. Configure the following settings:
    - **Name:** Prometheus
-   - **URL:** http://localhost:9090
+   - **URL:** [http://localhost:9090](http://localhost:9090)
    - **Access:** Server (default)
 5. Click **Save & Test**
 
-### Verification
+### Grafana Verification
 
-#### 1. Check Service Status
+**1. Check Service Status:**
+
 ```bash
 sudo systemctl status grafana-server
 ```
 
-#### 2. Check Network Connectivity
+**2. Check Network Connectivity:**
+
 ```bash
 sudo ss -tlnp | grep :3000
 ```
 
-#### 3. Access Web Interface
-Open your browser and navigate to: http://localhost:3000
+**3. Access Web Interface:**
+Open your browser and navigate to: [http://localhost:3000](http://localhost:3000)
 
-### Troubleshooting
+### Grafana Troubleshooting
 
 Check logs if issues occur:
+
 ```bash
 sudo journalctl -u grafana-server -f
 ```
@@ -393,6 +411,7 @@ sudo journalctl -u grafana-server -f
 This guide provides step-by-step instructions for installing and configuring Node Exporter to collect system metrics on Linux systems.
 
 ### Prerequisites
+
 - Prometheus already installed (see above)
 - sudo privileges
 - Internet connection
@@ -437,6 +456,7 @@ sudo chmod 755 /usr/local/bin/node_exporter
 ```
 
 **What this installs:**
+
 - `node_exporter` - Collects hardware and OS metrics from Linux systems
 
 ### Step 5: Create Systemd Service
@@ -470,6 +490,7 @@ WantedBy=multi-user.target
 ```
 
 **Service configuration explained:**
+
 - Runs as `node_exporter` user for security
 - Automatically restarts on failure
 - Listens on port 9100 (default Node Exporter port)
@@ -499,23 +520,33 @@ sudo systemctl restart prometheus
 
 ### Verification
 
-#### 1. Check Service Status
+**1. Check Service Status:**
+
 ```bash
 sudo systemctl status node_exporter
 ```
 
-#### 2. Check Network Connectivity
+**2. Check Network Connectivity:**
+
 ```bash
 sudo ss -tlnp | grep :9100
 ```
 
-#### 3. Test Metrics Endpoint
+**3. Test Metrics Endpoint:**
+
 ```bash
 curl http://localhost:9100/metrics
 ```
 
 This should return a large amount of system metrics.
 
+### Node Explorer Troubleshooting
+
+Check logs if issues occur:
+
+```bash
+sudo journalctl -u node_exporter -f
+```
 
 ## Prometheus Targets Configuration
 
@@ -591,7 +622,8 @@ promtool check config /etc/prometheus/prometheus.yml
 ```
 
 Expected output should show:
-```
+
+```bash
 Checking /etc/prometheus/prometheus.yml
 SUCCESS: /etc/prometheus/prometheus.yml is valid prometheus config file syntax
 ```
@@ -607,7 +639,7 @@ sudo systemctl status prometheus
 
 ### Target Explanation
 
-#### Service Monitoring Targets:
+**Service Monitoring Targets:**
 
 | Service | Port | Purpose | Metrics Available |
 |---------|------|---------|-------------------|
@@ -616,21 +648,19 @@ sudo systemctl status prometheus
 | **Grafana** | 3000 | Dashboard metrics | User sessions, dashboard usage, query performance |
 | **Node Exporter** | 9100 | System metrics | CPU, memory, disk, network, hardware sensors |
 
-#### Scrape Intervals Explained:
+**Scrape Intervals Explained:**
+
 - **15s (default):** For critical system metrics (Prometheus, Node Exporter)
 - **30s:** For application metrics (Alertmanager, Grafana) - less critical
 
 ### Step 5: Verification
 
-#### 1. Check Targets Status
-Navigate to the Prometheus targets page:
-```
-http://localhost:9090/targets
-```
+**1. Check Targets Status:**
+Navigate to the Prometheus targets page: [http://localhost:9090/targets](http://localhost:9090/targets)
 
 All targets should show status **UP** in green.
 
-#### 2. Verify Each Target
+**2. Verify Each Target:**
 
 Test each target endpoint manually:
 
@@ -648,9 +678,9 @@ curl -s http://localhost:3000/metrics | head -5
 curl -s http://localhost:9100/metrics | head -5
 ```
 
-#### 3. Query Sample Metrics
+**3. Query Sample Metrics:**
 
-In the Prometheus web UI (`http://localhost:9090`), try these queries:
+In the Prometheus web UI ([http://localhost:9090](http://localhost:9090)), try these queries:
 
 ```promql
 # Check all services are up
@@ -674,9 +704,10 @@ alertmanager_alerts_active
 
 ### Troubleshooting
 
-#### Common Issues:
+**Common Issues:**
 
 1. **Target DOWN status:**
+
    ```bash
    # Check if service is running
    sudo systemctl status <service-name>
@@ -686,6 +717,7 @@ alertmanager_alerts_active
    ```
 
 2. **Configuration errors:**
+
    ```bash
    # Check Prometheus logs
    sudo journalctl -u prometheus -f
@@ -695,6 +727,7 @@ alertmanager_alerts_active
    ```
 
 3. **Network connectivity:**
+
    ```bash
    # Test connectivity to each target
    telnet localhost 9090
