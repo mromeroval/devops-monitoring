@@ -735,3 +735,33 @@ alertmanager_alerts_active
    telnet localhost 3000
    telnet localhost 9100
    ```
+
+## Test with Stress tool
+
+You can use the `stress` tool to generate CPU and memory load on your system, which can help you test the monitoring setup. Here's how to install and use it:
+
+### Step 1: Install Stress Tool
+
+```bash
+sudo apt-get update
+sudo apt-get install -y stress
+```
+
+### Step 2: Run Stress Test
+
+To generate CPU and memory load, run the following command:
+
+```bash
+stress --cpu 4 --vm 2 --vm-bytes 256M --timeout 300s
+```
+
+**Parameters explained:**
+
+- `--cpu 4`: Spawns 4 CPU stressors to load the CPU.
+- `--vm 2`: Spawns 2 memory stressors to allocate memory.
+- `--vm-bytes 256M`: Each memory stressor allocates 256MB
+- `--timeout 300s`: Runs the stress test for 300 seconds (5 minutes).
+
+### Step 3: Monitor Metrics
+
+While the stress test is running, you can monitor the metrics in Prometheus and Grafana to see how your system handles the load. Look for CPU usage, memory usage, and other relevant metrics.
