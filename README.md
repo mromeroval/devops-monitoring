@@ -266,6 +266,27 @@ sudo systemctl status alertmanager
 sudo systemctl enable alertmanager
 ```
 
+### Step 9: Configure amtool
+
+Create amtool configuration directory and file:
+
+```bash
+sudo mkdir /etc/amtool
+sudo vim /etc/amtool/config.yml
+```
+
+Add this configuration:
+
+```yaml
+alertmanager.url: http://localhost:9093
+```
+
+Check `amtool` configuration by displaying the current running configuration of the Prometheus Alertmanager server
+
+```bash
+amtool config show
+```
+
 ### Alertmanager Verification
 
 Check if Alertmanager is running:
